@@ -5,9 +5,17 @@ const ifname = "samples/input.txt";
 const ofname = "samples/output.txt";
 
 pub fn main() !void {
+    const allocator = std.heap.page_allocator;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    var args = try std.process.ArgIterator.initWithAllocator(arena.allocator());
+    while (args.next()) |arg| {
+        std.log.debug("Read arg <{s}>", .{arg});
+    }
+
     // Let's read a file and transform it with rot13
     std.log.info("reading {s}", .{ifname});
-
     std.log.info("writing {s}", .{ofname});
 
     // get current dir
