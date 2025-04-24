@@ -6,7 +6,7 @@ pub fn build(b: *std.Build) void {
 
     const m = b.createModule(.{
         .target = b.standardTargetOptions(.{}),
-        .root_source_file = b.path("bin/rot13.zig"),
+        .root_source_file = b.path("bin/main.zig"),
     });
 
     const compile_step = b.addExecutable(.{

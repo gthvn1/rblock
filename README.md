@@ -7,6 +7,7 @@
 ## Changelog
 
 - **24-04-2025**
+  - start a module rot13
   - read input from `samples/input.txt` and write the `samples/output.txt`
     after transforming using rot13.
   - move source code into `bin/` and renamed file rot13.zig
