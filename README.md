@@ -7,6 +7,8 @@
 ## Changelog
 
 - **24-04-2025**
+  - Adding a name field. Next errors: `@panic("`root_module` and `target` cannot both be null")`
+  - In library we found *addExecutable*. Add it without executable options says name is required.
   - adding the missing argument. Next errors: None it builds!!! but nothing is produced :)
   - adding a member named *build*. Next errors: `.../zig-linux-x86_64-0.14.0/lib/std/Build.zig:2427:27: error: expected 0 argument(s), found 1
         .void => build_zig.build(b),`
