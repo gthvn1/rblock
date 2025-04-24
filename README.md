@@ -7,6 +7,8 @@
 ## Changelog
 
 - **24-04-2025**
+  - adding a member named *build*. Next errors: `.../zig-linux-x86_64-0.14.0/lib/std/Build.zig:2427:27: error: expected 0 argument(s), found 1
+        .void => build_zig.build(b),`
   - instead of running `zig init` to fix previous issue just create an empty `build.zig`
     and run `zig build` again. It failed with:
     - `root source file struct 'build' has no member named 'build'`
