@@ -7,6 +7,8 @@
 ## Changelog
 
 - **24-04-2025**
+  - We use create module to create the *root_module*. It builds but still no executable is generated.
+  - In doc target is mentionned as deprecated and prefer *root_module*
   - Adding a name field. Next errors: `@panic("`root_module` and `target` cannot both be null")`
   - In library we found *addExecutable*. Add it without executable options says name is required.
   - adding the missing argument. Next errors: None it builds!!! but nothing is produced :)
