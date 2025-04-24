@@ -6,11 +6,11 @@ pub fn build(b: *std.Build) void {
 
     const m = b.createModule(.{
         .target = b.standardTargetOptions(.{}),
-        .root_source_file = b.path("hello.zig"),
+        .root_source_file = b.path("bin/rot13.zig"),
     });
 
     const compile_step = b.addExecutable(.{
-        .name = "hello.exe",
+        .name = "rot13.exe",
         .root_module = m,
     });
 

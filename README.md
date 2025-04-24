@@ -7,6 +7,8 @@
 ## Changelog
 
 - **24-04-2025**
+  - move source code into `bin/` and renamed file rot13.zig
+  - write a string into an output file
   - add the compile step as part of an install step and adds it to the dependencies of the top-level install
     - Now we have the executable: `zig build && ./zig-out/bin/hello.exe` 
   - adding *root_source_file* to module but still no executable
