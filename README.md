@@ -7,6 +7,9 @@
 ## Changelog
 
 - **24-04-2025**
+  - add the compile step as part of an install step and adds it to the dependencies of the top-level install
+    - Now we have the executable: `zig build && ./zig-out/bin/hello.exe` 
+  - adding *root_source_file* to module but still no executable
   - We use create module to create the *root_module*. It builds but still no executable is generated.
   - In doc target is mentionned as deprecated and prefer *root_module*
   - Adding a name field. Next errors: `@panic("`root_module` and `target` cannot both be null")`

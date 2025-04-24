@@ -6,10 +6,13 @@ pub fn build(b: *std.Build) void {
 
     const m = b.createModule(.{
         .target = b.standardTargetOptions(.{}),
+        .root_source_file = b.path("hello.zig"),
     });
 
-    _ = b.addExecutable(.{
+    const compile_step = b.addExecutable(.{
         .name = "hello.exe",
         .root_module = m,
     });
+
+    b.installArtifact(compile_step);
 }
