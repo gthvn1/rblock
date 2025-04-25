@@ -6,6 +6,7 @@
 ## Changelog
 
 - **25-04-2025**
+  - copy after applying rot13 rotation
   - copy input file into output file
   - add `main` function... and it buils successfully
     - now you can do `cargo build && ./target/debug/hello`
