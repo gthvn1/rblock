@@ -6,6 +6,10 @@
 
 ## Changelog
 
+- **25-04-2025**
+  - do the same but using rust
+    - start with an empty repo, run `cargo build` and fixes issues reported to reach the hello starting point
+
 - **24-04-2025**
   - start a module rot13
   - read input from `samples/input.txt` and write the `samples/output.txt`
