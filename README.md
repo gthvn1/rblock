@@ -7,6 +7,17 @@
 ## Changelog
 
 - **25-04-2025**
+  - add `main` function... and it buils successfully
+    - now you can do `cargo build && ./target/debug/hello`
+  - add missing `src/main.rs`
+    - **ERROR**: error[E0601]: `main` function not found in crate `hello`
+  - add missing `package.name`
+    - See the [Cargo manifest](https://doc.rust-lang.org/cargo/reference/manifest.html)
+    - **ERROR**: no targets specified in the manifest
+  - add missing `[package]`
+    - **ERROR**: missing field `package.name`
+  - create an empty `Cargo.toml`
+    - **ERROR**: manifest is missing either a `[package]` or a `[workspace]`
   - do the same but using rust
     - start with an empty repo, run `cargo build` and fixes issues reported to reach the hello starting point
 
