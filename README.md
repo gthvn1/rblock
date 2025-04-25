@@ -1,4 +1,4 @@
-# zblock
+# rblock
 
 - understanding block devices and image formats
   - read/write block device and play with image formats (VHD, Qcow2, ...)
