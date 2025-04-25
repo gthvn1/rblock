@@ -1,8 +1,7 @@
 # zblock
 
 - understanding block devices and image formats
-  - first it is to learn Zig
-  - then read/write block device and play with image formats (VHD, Qcow2, ...)
+  - read/write block device and play with image formats (VHD, Qcow2, ...)
 
 ## Changelog
 
