@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, net::TcpListener};
 
 const IFNAME: &str = "samples/input.txt";
 const OFNAME: &str = "samples/output.txt";
@@ -19,6 +19,18 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
 }
 
 fn main() {
+    // Todo: create a server with an endpoint where we can post a request and it
+    //       returns the content transformed using rot13
+    let listener =
+        TcpListener::bind("127.0.0.1:1234").unwrap_or_else(|_| panic!("failed to bind listener"));
+
     let buf = fs::read(IFNAME).unwrap_or_else(|_| panic!("Failed to read {}", IFNAME));
     fs::write(OFNAME, rot13(buf)).unwrap_or_else(|_| panic!("Failed to write {}", OFNAME));
+
+    for stream in listener.incoming() {
+        match stream {
+            Ok(_stream) => println!("incoming connection"),
+            Err(_) => println!("failed to get incoming connection"),
+        }
+    }
 }
