@@ -1,7 +1,10 @@
 use std::{fs, net::TcpListener};
 
+use rblock::qcow2::Qcow2;
+
 const IFNAME: &str = "samples/input.txt";
 const OFNAME: &str = "samples/output.txt";
+const QCOWFNAME: &str = "samples/disk.qcow2";
 
 fn rot13(v: Vec<u8>) -> Vec<u8> {
     let mut rotv: Vec<u8> = Vec::new();
@@ -19,6 +22,14 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
 }
 
 fn main() {
+    println!("Testing QCOW2");
+    let mut qcow = Qcow2::new(QCOWFNAME).expect("Failed to read qcow file");
+    if qcow.is_qcow() {
+        println!("QCOW has valid magic");
+    } else {
+        println!("QCOW has not a valid magic");
+    }
+
     // Todo: create a server with an endpoint where we can post a request and it
     //       returns the content transformed using rot13
     let listener =
