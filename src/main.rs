@@ -22,7 +22,7 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
 }
 
 fn main() {
-    println!("Testing QCOW2");
+    print!("Testing QCOW2: ");
     let mut qcow = Qcow2::new(QCOWFNAME).expect("Failed to read qcow file");
     if qcow.is_qcow() {
         println!("QCOW has valid magic");
@@ -30,13 +30,17 @@ fn main() {
         println!("QCOW has not a valid magic");
     }
 
+    println!("Testing ROT13: {} -> {}", IFNAME, OFNAME);
+    let buf = fs::read(IFNAME).expect(&format!("Failed to read {}", IFNAME));
+    fs::write(OFNAME, rot13(buf)).expect(&format!("Failed to write {}", OFNAME));
+
     // Todo: create a server with an endpoint where we can post a request and it
     //       returns the content transformed using rot13
+    println!("Starting server on localhost:1234");
+    println!("  > ctrl-c to quit, ");
+    println!("  > echo 'hello' | nc localhost 1234");
     let listener =
         TcpListener::bind("127.0.0.1:1234").unwrap_or_else(|_| panic!("failed to bind listener"));
-
-    let buf = fs::read(IFNAME).unwrap_or_else(|_| panic!("Failed to read {}", IFNAME));
-    fs::write(OFNAME, rot13(buf)).unwrap_or_else(|_| panic!("Failed to write {}", OFNAME));
 
     for stream in listener.incoming() {
         match stream {
