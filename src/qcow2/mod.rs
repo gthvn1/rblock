@@ -1,6 +1,54 @@
 use std::fs::File;
 use std::io::{self, Read};
 
+#[derive(Debug)]
+pub enum Qcow2Field {
+    Magic,
+    Version,
+    BackingFileOffset,
+    BackingFileSize,
+    ClusterBits,
+    Size,
+    CryptMethod,
+    L1Size,
+    L1TableOffset,
+    RefcountTableOffset,
+    RefcountTableClusters,
+    NbSnapshots,
+    SnapshotsOffset,
+    // Only for version >= 3:
+    IncompatibleFeatures,
+    CompatibleFeatures,
+    AutoclearFeatures,
+    RefcountOrder,
+    HeaderLength,
+}
+
+impl Qcow2Field {
+    pub fn range(&self) -> (usize, usize) {
+        match self {
+            Qcow2Field::Magic => (0, 3),
+            Qcow2Field::Version => (4, 7),
+            Qcow2Field::BackingFileOffset => (8, 15),
+            Qcow2Field::BackingFileSize => (16, 19),
+            Qcow2Field::ClusterBits => (20, 23),
+            Qcow2Field::Size => (24, 31),
+            Qcow2Field::CryptMethod => (32, 35),
+            Qcow2Field::L1Size => (36, 39),
+            Qcow2Field::L1TableOffset => (40, 47),
+            Qcow2Field::RefcountTableOffset => (48, 55),
+            Qcow2Field::RefcountTableClusters => (56, 59),
+            Qcow2Field::NbSnapshots => (60, 63),
+            Qcow2Field::SnapshotsOffset => (64, 71),
+            Qcow2Field::IncompatibleFeatures => (72, 79),
+            Qcow2Field::CompatibleFeatures => (80, 87),
+            Qcow2Field::AutoclearFeatures => (88, 95),
+            Qcow2Field::RefcountOrder => (96, 99),
+            Qcow2Field::HeaderLength => (100, 103),
+        }
+    }
+}
+
 pub struct Qcow2 {
     file: File,
     version: u32,

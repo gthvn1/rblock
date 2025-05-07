@@ -1,4 +1,8 @@
-use std::{fs, net::TcpListener};
+use std::{
+    fs,
+    io::{Read, Write},
+    net::{TcpListener, TcpStream},
+};
 
 use rblock::qcow2::Qcow2;
 
@@ -29,8 +33,31 @@ fn testing_qcow2() {
 
 fn testing_rot13() {
     println!("Testing ROT13: {} -> {}", IFNAME, OFNAME);
-    let buf = fs::read(IFNAME).expect(&format!("Failed to read {}", IFNAME));
-    fs::write(OFNAME, rot13(buf)).expect(&format!("Failed to write {}", OFNAME));
+    let buf = fs::read(IFNAME).unwrap_or_else(|_| panic!("Failed to read {}", IFNAME));
+    fs::write(OFNAME, rot13(buf)).unwrap_or_else(|_| panic!("Failed to write {}", OFNAME));
+}
+
+fn handle_connection(mut stream: TcpStream) {
+    let mut buf: [u8; 1024] = [0; 1024];
+    let sz = stream
+        .read(&mut buf)
+        .expect("Failed to read data from stream");
+    if sz == 0 {
+        println!("Failed to read data from stream... closing connection");
+        return;
+    }
+
+    if sz == 1024 {
+        println!("Warning: buffer is full");
+    }
+
+    println!(
+        "read {} bytes: <{}>",
+        sz,
+        String::from_utf8_lossy(&buf[0..sz])
+    );
+
+    let _ = stream.write("pong".as_bytes());
 }
 
 fn start_server() {
@@ -38,13 +65,14 @@ fn start_server() {
     //       returns the content transformed using rot13
     println!("Starting server on localhost:1234");
     println!("  > ctrl-c to quit, ");
+    // echo -n '{ "jsonrpc": "2.0", "method": "ping", "id": 1 }' | nc localhost 1234
     println!("  > echo 'hello' | nc localhost 1234");
     let listener =
         TcpListener::bind("127.0.0.1:1234").unwrap_or_else(|_| panic!("failed to bind listener"));
 
     for stream in listener.incoming() {
         match stream {
-            Ok(_stream) => println!("incoming connection"),
+            Ok(stream) => handle_connection(stream),
             Err(_) => println!("failed to get incoming connection"),
         }
     }
