@@ -125,27 +125,42 @@ impl Qcow2 {
         let (off_begin, off_end) = Qcow2Field::BackingFileOffset.range();
         let (sz_begin, sz_end) = Qcow2Field::BackingFileSize.range();
 
-        let offset = u64::from_be_bytes(
-            self.header[off_begin..=off_end]
-                .try_into()
-                .expect("failed to convert backing file offset"),
-        );
+        let offset = match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                println!("failed to convert backing file offset: {}", e);
+                return None;
+            }
+        };
 
-        let sz = u32::from_be_bytes(
-            self.header[sz_begin..=sz_end]
-                .try_into()
-                .expect("failed to convert backing file size"),
-        );
+        let sz = match self.header[sz_begin..=sz_end].try_into() {
+            Ok(bytes) => u32::from_be_bytes(bytes),
+            Err(e) => {
+                println!("failed to convert backing file size: {}", e);
+                return None;
+            }
+        };
 
         println!("Backing file offset is {}", offset);
         println!("Backing file size is {}", sz);
 
         let mut buf = vec![0u8; sz as usize];
-        let _bytes_read = self
-            .file
-            .read_at(&mut buf, offset)
-            .expect("Failed to read backing file name");
+        let _bytes_read = match self.file.read_at(&mut buf, offset) {
+            Ok(n) => n,
+            Err(e) => {
+                println!("Failed to read backing file name: {}", e);
+                return None;
+            }
+        };
 
-        Some(String::from_utf8(buf).expect("failed to convert backing file name to string"))
+        let filename = match String::from_utf8(buf) {
+            Ok(f) => f,
+            Err(e) => {
+                println!("Failed to convert backing file name to string: {}", e);
+                return None;
+            }
+        };
+
+        Some(filename)
     }
 }
