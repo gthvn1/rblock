@@ -21,7 +21,8 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
 fn testing_qcow2(fname: &str) {
     print!("Testing QCOW2: ");
     let qcow = Qcow2::new(fname).expect("Failed to read qcow file");
-    println!("Detected qcow version {}", qcow.version());
+    println!("Detected qcow version : {}", qcow.version());
+    println!("Backing file          : {:?}", qcow.backing_file());
 }
 
 fn testing_rot13() {

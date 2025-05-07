@@ -1,6 +1,8 @@
 use std::fs::File;
 use std::io::{self, Read};
+use std::os::unix::fs::FileExt;
 
+// https://github.com/qemu/qemu/blob/master/docs/interop/qcow2.txt
 #[derive(Debug)]
 pub enum Qcow2Field {
     Magic,
@@ -117,5 +119,33 @@ impl Qcow2 {
 
     pub fn version(&self) -> u32 {
         self.version
+    }
+
+    pub fn backing_file(&self) -> Option<String> {
+        let (off_begin, off_end) = Qcow2Field::BackingFileOffset.range();
+        let (sz_begin, sz_end) = Qcow2Field::BackingFileSize.range();
+
+        let offset = u64::from_be_bytes(
+            self.header[off_begin..=off_end]
+                .try_into()
+                .expect("failed to convert backing file offset"),
+        );
+
+        let sz = u32::from_be_bytes(
+            self.header[sz_begin..=sz_end]
+                .try_into()
+                .expect("failed to convert backing file size"),
+        );
+
+        println!("Backing file offset is {}", offset);
+        println!("Backing file size is {}", sz);
+
+        let mut buf = vec![0u8; sz as usize];
+        let _bytes_read = self
+            .file
+            .read_at(&mut buf, offset)
+            .expect("Failed to read backing file name");
+
+        Some(String::from_utf8(buf).expect("failed to convert backing file name to string"))
     }
 }
