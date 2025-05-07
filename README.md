@@ -5,6 +5,14 @@
 - Understanding how QCOW2 stores differences (L2/L1 tables, refcounting, backing file chains).
 - Efficiently scanning two block devices, detecting changed sectors.
 - Writing a valid QCOW2 delta image with proper headers and structure.
+- To also play with JSON RPC maybe we can write a server for qcow2 files that accepts JSON RPC method like
+```json
+{ "jsonrpc": "2.0", "method": "read", "params": { "offset": 4096, "length": 512 }, "id": 1 }
+```
+- or also control command like
+```json
+{ "method": "get_version", "id": 42 }
+```
 
 ## Steps
 
@@ -17,6 +25,7 @@ In progess...
 - [ ] Parse version, backing file name, cluster size.
 - [ ] Print L1/L2 table layout (even without reading them yet).
 - [ ] Add a `--inspect` option
+- [ ] Implement a minimal server with JSON RPC method for inspection...
 
 ### Create a qcow2 file from RAW block device
 
