@@ -49,6 +49,7 @@ impl Qcow2Field {
     }
 }
 
+#[allow(dead_code)]
 pub struct Qcow2 {
     file: File,
     version: u32,
