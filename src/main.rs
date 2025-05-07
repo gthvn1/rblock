@@ -21,19 +21,19 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
     rotv
 }
 
-fn main() {
+fn testing_qcow2() {
     print!("Testing QCOW2: ");
-    let mut qcow = Qcow2::new(QCOWFNAME).expect("Failed to read qcow file");
-    if qcow.is_qcow() {
-        println!("QCOW has valid magic");
-    } else {
-        println!("QCOW has not a valid magic");
-    }
+    let qcow = Qcow2::new(QCOWFNAME).expect("Failed to read qcow file");
+    println!("Detected qcow version {}", qcow.version());
+}
 
+fn testing_rot13() {
     println!("Testing ROT13: {} -> {}", IFNAME, OFNAME);
     let buf = fs::read(IFNAME).expect(&format!("Failed to read {}", IFNAME));
     fs::write(OFNAME, rot13(buf)).expect(&format!("Failed to write {}", OFNAME));
+}
 
+fn start_server() {
     // Todo: create a server with an endpoint where we can post a request and it
     //       returns the content transformed using rot13
     println!("Starting server on localhost:1234");
@@ -48,4 +48,10 @@ fn main() {
             Err(_) => println!("failed to get incoming connection"),
         }
     }
+}
+
+fn main() {
+    testing_qcow2();
+    testing_rot13();
+    start_server();
 }
