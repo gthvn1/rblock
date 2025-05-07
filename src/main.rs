@@ -1,7 +1,7 @@
-use std::{env, fs};
-
+use log::{debug, error};
 use rblock::qcow2::Qcow2;
 use rblock::server::start_server;
+use std::{env, fs};
 
 fn rot13(v: Vec<u8>) -> Vec<u8> {
     let mut rotv: Vec<u8> = Vec::new();
@@ -19,21 +19,34 @@ fn rot13(v: Vec<u8>) -> Vec<u8> {
 }
 
 fn testing_qcow2(fname: &str) {
-    print!("Testing QCOW2: ");
     let qcow = Qcow2::new(fname).expect("Failed to read qcow file");
-    println!("Detected qcow version : {}", qcow.version());
-    println!("Backing file          : {:?}", qcow.backing_file());
+    debug!("Detected qcow version : {}", qcow.version());
+    debug!("Backing file          : {:?}", qcow.backing_file());
 }
 
 fn testing_rot13() {
     const IFNAME: &str = "samples/input.txt";
     const OFNAME: &str = "samples/output.txt";
-    println!("Testing ROT13: {} -> {}", IFNAME, OFNAME);
-    let buf = fs::read(IFNAME).unwrap_or_else(|_| panic!("Failed to read {}", IFNAME));
-    fs::write(OFNAME, rot13(buf)).unwrap_or_else(|_| panic!("Failed to write {}", OFNAME));
+
+    debug!("Testing ROT13: {} -> {}", IFNAME, OFNAME);
+    let buf = match fs::read(IFNAME) {
+        Ok(v) => v,
+        Err(e) => {
+            error!("failed to read {}: {}", IFNAME, e);
+            return;
+        }
+    };
+
+    fs::write(OFNAME, rot13(buf)).unwrap_or_else(|e| {
+        error!("Failed to write {}: {}", OFNAME, e);
+    })
 }
 
 fn main() {
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Trace)
+        .init();
+
     const QCOWFNAME: &str = "samples/disk.qcow2";
     let mut arguments = env::args();
 
@@ -45,7 +58,7 @@ fn main() {
         Some(f) => f,
     };
 
-    println!("qcow file: {}", fname);
+    debug!("qcow file: {}", fname);
     testing_qcow2(&fname);
     testing_rot13();
     start_server();

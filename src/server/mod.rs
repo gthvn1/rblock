@@ -1,3 +1,4 @@
+use log::{debug, error, info, warn};
 use serde::Deserialize;
 use serde_json::json;
 
@@ -15,18 +16,18 @@ struct JsonRpcRequest {
 }
 
 pub fn start_server() {
-    println!("Starting server on localhost:1234");
-    println!("  > ctrl-c to quit, ");
+    info!("Starting server on localhost:1234");
+    info!("  > ctrl-c to quit, ");
     // echo -n '{ "jsonrpc": "2.0", "method": "ping", "id": 1 }' | nc localhost 1234
     let help = r#"echo -n '{ "jsonrpc": "2.0", "method": "ping", "id": 1 }' | nc localhost 1234"#;
-    println!("  > {}", help);
+    info!("  > {}", help);
     let listener =
         TcpListener::bind("127.0.0.1:1234").unwrap_or_else(|_| panic!("failed to bind listener"));
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => handle_connection(stream),
-            Err(_) => println!("failed to get incoming connection"),
+            Err(e) => error!("failed to get incoming connection: {}", e),
         }
     }
 }
@@ -51,7 +52,7 @@ fn handle_connection(mut stream: TcpStream) {
     };
 
     if sz == 1024 {
-        println!("Warning: buffer is full");
+        warn!("Warning: buffer is full");
     }
 
     let invalid_request = json!({
@@ -72,7 +73,7 @@ fn handle_connection(mut stream: TcpStream) {
         }
     };
 
-    println!("request: {}", request);
+    debug!("request: {}", request);
 
     let request = match serde_json::from_str::<JsonRpcRequest>(request) {
         Ok(r) => r,
