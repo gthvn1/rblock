@@ -1,6 +1,6 @@
 use log::{debug, error};
 use rblock::qcow2::Qcow2;
-use rblock::server::start_server;
+use rblock::server::start_servers;
 use std::{env, fs};
 
 fn rot13(v: Vec<u8>) -> Vec<u8> {
@@ -61,5 +61,5 @@ fn main() {
     debug!("qcow file: {}", fname);
     testing_qcow2(&fname);
     testing_rot13();
-    start_server();
+    start_servers();
 }
