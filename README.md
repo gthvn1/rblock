@@ -1,6 +1,6 @@
 # rblock
 
-## Goals
+## Goals and ideas
 
 - Understanding how QCOW2 stores differences (L2/L1 tables, refcounting, backing file chains).
 - Efficiently scanning two block devices, detecting changed sectors.
@@ -13,6 +13,15 @@
 ```json
 { "method": "get_version", "id": 42 }
 ```
+- Another idea is to create a NBD server to provide a [NetworkBlockDevice](https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md) and
+in the same time have a socket to serve JSON RPC.
+- To connect the qcow file to a block device we could then load nbd kernel module and use
+nbd client to connect our nbd server to the block device. It should looks like:
+```sh
+sudo modprobe nbd
+sudo nbd-client localhost 10809 /dev/nbd0 
+```
+
 
 ## Steps
 
