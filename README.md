@@ -28,6 +28,19 @@ sudo nbd-client localhost 10809 /dev/nbd0
 - [qcow2 spec](https://github.com/qemu/qemu/blob/master/docs/interop/qcow2.txt)
 - [JSON-RPC spec](https://www.jsonrpc.org/specification)
 
+## Tips
+
+- to write on the third guest cluster a hello world string you can mount the disk using `qemu-img` and then `dd`:
+```sh
+sudo qemu-nbd --connect=/dev/nbd0 disk.qcow2
+printf "Hello, world!" | sudo dd of=/dev/nbd0 bs=1 seek=$((3 * 65536)) conv=notrunc
+# disconnect and check
+sudo qemu-nbd --disconnect /dev/nbd0
+sudo hexdump -C -n 64 /dev/nbd0 --skip=$((3 * 65536))
+# To check the relation between host and guest cluster:
+qemu-img map disk.qcow2
+```
+
 ## Steps
 
 ### Explore and play
