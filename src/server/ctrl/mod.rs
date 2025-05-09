@@ -1,7 +1,8 @@
+mod rpc_methods;
+
 use log::{debug, error, info, warn};
 use serde::Deserialize;
 use serde_json::json;
-
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
@@ -42,6 +43,8 @@ struct JsonRpcRequest {
 }
 
 fn handle_connection(mut stream: TcpStream, qcow: Arc<Mutex<Qcow2>>) {
+    let rpc_methods = rpc_methods::init_once();
+
     let parse_error = json!({
         "jsonrpc": "2.0",
         "error": {
@@ -97,41 +100,21 @@ fn handle_connection(mut stream: TcpStream, qcow: Arc<Mutex<Qcow2>>) {
     // TODO: check JSON RPC version
     let _ = request.jsonrpc;
 
-    let response = match request.method.as_str() {
-        "ping" => json!({
+    let response = if let Some(handler) = rpc_methods.get(request.method.as_str()) {
+        json!({
             "jsonrpc": "2.0",
-            "result": "pong",
+            "result": handler(&qcow),
             "id":request.id,
-        }),
-        "get_backing_file" => {
-            let q = qcow.lock().unwrap();
-            let bf = match q.backing_file() {
-                None => "".to_string(),
-                Some(s) => s,
-            };
-
-            json!({
-                "jsonrpc": "2.0",
-                "result": bf,
-                "id":request.id,
-            })
-        }
-        "version" => {
-            let q = qcow.lock().unwrap();
-            json!({
-                "jsonrpc": "2.0",
-                "result": q.version(),
-                "id":request.id,
-            })
-        }
-        _ => json!({
+        })
+    } else {
+        json!({
             "jsonrpc": "2.0",
             "error": {
                 "code": -32601,
                 "message": "Method not found"
             },
             "id": null
-        }),
+        })
     };
 
     let serialized = response.to_string();
