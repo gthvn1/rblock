@@ -5,9 +5,12 @@ use serde_json::json;
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
+    sync::{Arc, Mutex},
 };
 
-pub fn start_ctrl_server() {
+use crate::qcow2::Qcow2;
+
+pub fn start_ctrl_server(_qcow: Arc<Mutex<Qcow2>>) {
     info!("Starting controller on localhost:1234");
     info!("  > ctrl-c to quit, ");
     let help = r#"echo -n '{ "jsonrpc": "2.0", "method": "ping", "id": 1 }' | nc localhost 1234"#;
@@ -20,6 +23,7 @@ pub fn start_ctrl_server() {
         match stream {
             Ok(stream) => {
                 std::thread::spawn(move || {
+                    // TODO: clone qcow to pass it to the handler
                     handle_connection(stream);
                 });
             }
