@@ -122,6 +122,20 @@ impl Qcow2 {
         self.version
     }
 
+    pub fn cluster_size(&self) -> usize {
+        let (off_begin, off_end) = Qcow2Field::ClusterBits.range();
+
+        let cluster_bits = match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u32::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to get cluser_bits: {}", e);
+                return 0;
+            }
+        };
+
+        (1 << cluster_bits) as usize
+    }
+
     pub fn backing_file(&self) -> Option<String> {
         let (off_begin, off_end) = Qcow2Field::BackingFileOffset.range();
         let (sz_begin, sz_end) = Qcow2Field::BackingFileSize.range();

@@ -7,8 +7,9 @@ use crate::qcow2::Qcow2;
 type RpcHandler = fn(&Arc<Mutex<Qcow2>>) -> serde_json::Value;
 static RPC_METHODS: OnceLock<HashMap<&'static str, RpcHandler>> = OnceLock::new();
 
-fn rpc_ping(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
-    json!("pong")
+fn rpc_cluster_size(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
+    let q = qcow.lock().unwrap();
+    json!(q.cluster_size())
 }
 
 fn rpc_get_backing_file(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
@@ -17,6 +18,10 @@ fn rpc_get_backing_file(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
         None => json!("".to_string()),
         Some(s) => json!(s),
     }
+}
+
+fn rpc_ping(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
+    json!("pong")
 }
 
 fn rpc_version(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
@@ -38,12 +43,22 @@ fn rpc_discover(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
         .keys()
         .map(|&method_name| {
             match method_name {
-                "ping" => RpcMethodInfo {
+                "cluster_size" => RpcMethodInfo {
+                    name: method_name,
+                    parameters: vec![], // No parameters
+                    return_type: "int".to_string(),
+                },
+                "discover" => RpcMethodInfo {
+                    name: method_name,
+                    parameters: vec![], // No parameters
+                    return_type: "object".to_string(),
+                },
+                "get_backing_file" => RpcMethodInfo {
                     name: method_name,
                     parameters: vec![], // No parameters
                     return_type: "string".to_string(),
                 },
-                "get_backing_file" => RpcMethodInfo {
+                "ping" => RpcMethodInfo {
                     name: method_name,
                     parameters: vec![], // No parameters
                     return_type: "string".to_string(),
@@ -52,12 +67,6 @@ fn rpc_discover(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
                     name: method_name,
                     parameters: vec![], // No parameters
                     return_type: "int".to_string(),
-                },
-
-                "discover" => RpcMethodInfo {
-                    name: method_name,
-                    parameters: vec![], // No parameters
-                    return_type: "object".to_string(),
                 },
                 _ => RpcMethodInfo {
                     name: method_name,
@@ -74,10 +83,11 @@ fn rpc_discover(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
 pub fn init_once() -> &'static HashMap<&'static str, RpcHandler> {
     RPC_METHODS.get_or_init(|| {
         let mut map: HashMap<&'static str, RpcHandler> = HashMap::new();
-        map.insert("ping", rpc_ping as RpcHandler);
-        map.insert("get_backing_file", rpc_get_backing_file as RpcHandler);
-        map.insert("version", rpc_version as RpcHandler);
+        map.insert("cluster_size", rpc_cluster_size as RpcHandler);
         map.insert("discover", rpc_discover as RpcHandler);
+        map.insert("get_backing_file", rpc_get_backing_file as RpcHandler);
+        map.insert("ping", rpc_ping as RpcHandler);
+        map.insert("version", rpc_version as RpcHandler);
         map
     })
 }
