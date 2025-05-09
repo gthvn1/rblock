@@ -15,17 +15,13 @@ pub fn start_servers(fname: &str) {
         Qcow2::new(fname).expect("Failed to read qcow file"),
     ));
 
-    {
-        let q = qcow.lock().unwrap();
-        debug!("Detected qcow version : {}", q.version());
-        debug!("Backing file          : {:?}", q.backing_file());
-    }
-
+    debug!("Starting NBD server");
     let qcow_clone = Arc::clone(&qcow);
     thread::spawn(move || {
         start_nbd_server(qcow_clone);
     });
 
+    debug!("Starting controller");
     let qcow_clone = Arc::clone(&qcow);
     thread::spawn(move || {
         start_ctrl_server(qcow_clone);

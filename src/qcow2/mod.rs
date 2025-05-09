@@ -1,4 +1,4 @@
-use log::{debug, error};
+use log::error;
 use std::fs::File;
 use std::io::{self, Read};
 use std::os::unix::fs::FileExt;
@@ -141,9 +141,6 @@ impl Qcow2 {
                 return None;
             }
         };
-
-        debug!("Backing file offset is {}", offset);
-        debug!("Backing file size is {}", sz);
 
         let mut buf = vec![0u8; sz as usize];
         let _bytes_read = match self.file.read_at(&mut buf, offset) {
