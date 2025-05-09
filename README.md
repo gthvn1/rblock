@@ -22,6 +22,11 @@ sudo modprobe nbd
 sudo nbd-client localhost 10809 /dev/nbd0 
 ```
 
+## Links
+
+- [nbd protocol](https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md)
+- [qcow2 spec](https://github.com/qemu/qemu/blob/master/docs/interop/qcow2.txt)
+- [JSON-RPC spec](https://www.jsonrpc.org/specification)
 
 ## Steps
 
