@@ -20,6 +20,16 @@ fn rpc_get_backing_file(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
     }
 }
 
+fn rpc_l1_size(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
+    let q = qcow.lock().unwrap();
+    json!(q.l1_size())
+}
+
+fn rpc_l1_table_offset(qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
+    let q = qcow.lock().unwrap();
+    json!(q.l1_table_offset())
+}
+
 fn rpc_ping(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
     json!("pong")
 }
@@ -58,6 +68,16 @@ fn rpc_discover(_qcow: &Arc<Mutex<Qcow2>>) -> serde_json::Value {
                     parameters: vec![], // No parameters
                     return_type: "string".to_string(),
                 },
+                "l1_size" => RpcMethodInfo {
+                    name: method_name,
+                    parameters: vec![], // No parameters
+                    return_type: "int".to_string(),
+                },
+                "l1_table_offset" => RpcMethodInfo {
+                    name: method_name,
+                    parameters: vec![], // No parameters
+                    return_type: "long".to_string(),
+                },
                 "ping" => RpcMethodInfo {
                     name: method_name,
                     parameters: vec![], // No parameters
@@ -86,6 +106,8 @@ pub fn init_once() -> &'static HashMap<&'static str, RpcHandler> {
         map.insert("cluster_size", rpc_cluster_size as RpcHandler);
         map.insert("discover", rpc_discover as RpcHandler);
         map.insert("get_backing_file", rpc_get_backing_file as RpcHandler);
+        map.insert("l1_size", rpc_l1_size as RpcHandler);
+        map.insert("l1_table_offset", rpc_l1_table_offset as RpcHandler);
         map.insert("ping", rpc_ping as RpcHandler);
         map.insert("version", rpc_version as RpcHandler);
         map
