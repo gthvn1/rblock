@@ -52,7 +52,6 @@ impl Qcow2Field {
     }
 }
 
-#[allow(dead_code)]
 pub struct Qcow2 {
     file: File,
     version: u32,
@@ -122,6 +121,7 @@ impl Qcow2 {
         debug!("backing file          : {:?}", q.backing_file());
         debug!("cluster size          : {}", q.cluster_size());
         debug!("virtual size          : {}", q.virtual_size());
+        debug!("crypt method          : {}", q.crypt_method());
         debug!("L1 size               : {}", q.l1_size());
         debug!("L1 table offset       : 0x{:08x}", q.l1_table_offset());
         debug!("refcount width        : {}", q.refcount_width());
@@ -130,6 +130,14 @@ impl Qcow2 {
             q.refcount_table_offset()
         );
 
+        if version == 3 {
+            debug!("== Version 3 only== ");
+            debug!(
+                "incompatible features : 0x{:08x}",
+                q.incompatible_features()
+            );
+            debug!("compatible features : 0x{:08x}", q.compatible_features());
+        }
         Ok(q)
     }
 
@@ -207,6 +215,18 @@ impl Qcow2 {
         (1 << cluster_bits) as usize
     }
 
+    pub fn crypt_method(&self) -> u32 {
+        let (off_begin, off_end) = Qcow2Field::CryptMethod.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u32::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to get ctrypt method: {}", e);
+                0
+            }
+        }
+    }
+
     pub fn l1_size(&self) -> u32 {
         let (off_begin, off_end) = Qcow2Field::L1Size.range();
 
@@ -255,5 +275,30 @@ impl Qcow2 {
         };
 
         1 << order
+    }
+
+    pub fn incompatible_features(&self) -> u64 {
+        let (off_begin, off_end) = Qcow2Field::IncompatibleFeatures.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to read incompatible features: {}", e);
+                // Set all bits to 1 so it will fail to open the image
+                0xFFFFFFFFu64
+            }
+        }
+    }
+
+    pub fn compatible_features(&self) -> u64 {
+        let (off_begin, off_end) = Qcow2Field::CompatibleFeatures.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to read compatible features: {}", e);
+                0
+            }
+        }
     }
 }
