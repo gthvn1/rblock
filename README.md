@@ -2,7 +2,8 @@
 
 ## Goals and ideas
 
-- Understanding how QCOW2 stores differences (L2/L1 tables, refcounting, backing file chains).
+- Understanding how QCOW2 stores data (L2/L1 tables, refcounting, backing file chains).
+- Create a QCOW2 file from a block device.
 - Efficiently scanning two block devices, detecting changed sectors.
 - Writing a valid QCOW2 delta image with proper headers and structure.
 - To also play with JSON RPC maybe we can write a server for qcow2 files that accepts JSON RPC method like
