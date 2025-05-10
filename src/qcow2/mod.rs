@@ -155,6 +155,10 @@ impl Qcow2 {
                 q.autoclear_features()
             );
         }
+
+        // And dump L1 entries
+        let _ = q.get_l1_entries();
+
         Ok(q)
     }
 
@@ -329,5 +333,28 @@ impl Qcow2 {
                 0
             }
         }
+    }
+
+    pub fn get_l1_entries(&self) -> Vec<(usize, u64)> {
+        let l1_off = self.l1_table_offset();
+        let l1_sz = self.l1_size() as usize;
+
+        // l1_sz gives the number of entries used by l1
+        debug!("Reading {} bytes at offset 0x{:016x}", 8 * l1_sz, l1_off);
+        let mut buf: Vec<u8> = vec![0u8; l1_sz * 8];
+        self.file.read_exact_at(&mut buf, l1_off).unwrap();
+
+        let entries: Vec<(usize, u64)> = buf
+            .chunks_exact(8)
+            .enumerate()
+            .map(|(idx, chunk)| (idx, u64::from_be_bytes(chunk.try_into().unwrap())))
+            .filter(|&(_, entry)| entry != 0)
+            .collect();
+
+        for (idx, entry) in entries.iter() {
+            debug!("L1[{}] -> 0x{:016x}", idx, entry);
+        }
+
+        entries
     }
 }
