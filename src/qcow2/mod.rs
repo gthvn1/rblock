@@ -117,26 +117,43 @@ impl Qcow2 {
             header,
         };
 
-        debug!("header length         : {}", q.header_len());
-        debug!("backing file          : {:?}", q.backing_file());
-        debug!("cluster size          : {}", q.cluster_size());
-        debug!("virtual size          : {}", q.virtual_size());
-        debug!("crypt method          : {}", q.crypt_method());
-        debug!("L1 size               : {}", q.l1_size());
-        debug!("L1 table offset       : 0x{:08x}", q.l1_table_offset());
-        debug!("refcount width        : {}", q.refcount_width());
+        // As we don't understand any bits of incompatible features we
+        // just fail as soon as one is set.
+        let incompatible_features = q.incompatible_features();
+        if incompatible_features != 0 {
+            return Err(io::Error::new(
+                io::ErrorKind::Unsupported,
+                format!(
+                    "Unkown bit set in incompatible_features 0x{:08x}",
+                    incompatible_features
+                ),
+            ));
+        }
+
+        debug!("== Qcow2 header ==");
+        debug!("  header length         : {}", q.header_len());
+        debug!("  backing file          : {:?}", q.backing_file());
+        debug!("  cluster size          : {}", q.cluster_size());
+        debug!("  virtual size          : {}", q.virtual_size());
+        debug!("  crypt method          : {}", q.crypt_method());
+        debug!("  L1 size               : {}", q.l1_size());
+        debug!("  L1 table offset       : 0x{:08x}", q.l1_table_offset());
+        debug!("  refcount width        : {}", q.refcount_width());
         debug!(
-            "refcount table offset : 0x{:08x}",
+            "  refcount table offset : 0x{:08x}",
             q.refcount_table_offset()
         );
 
         if version == 3 {
-            debug!("== Version 3 only== ");
+            debug!("  = Version 3 only");
             debug!(
-                "incompatible features : 0x{:08x}",
-                q.incompatible_features()
+                "  compatible features are ignored: 0x{:08x}",
+                q.compatible_features()
             );
-            debug!("compatible features : 0x{:08x}", q.compatible_features());
+            debug!(
+                "  autoclear features are ignored: 0x{:08x}",
+                q.autoclear_features()
+            );
         }
         Ok(q)
     }
@@ -297,6 +314,18 @@ impl Qcow2 {
             Ok(bytes) => u64::from_be_bytes(bytes),
             Err(e) => {
                 error!("failed to read compatible features: {}", e);
+                0
+            }
+        }
+    }
+
+    pub fn autoclear_features(&self) -> u64 {
+        let (off_begin, off_end) = Qcow2Field::AutoclearFeatures.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to read autoclear features: {}", e);
                 0
             }
         }
