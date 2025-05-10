@@ -49,10 +49,9 @@ qemu-img map disk.qcow2
 
 In progess...
 - [x] Detect QCOW2 magic.
-- [ ] Parse version, backing file name, cluster size.
+- [x] Parse version, backing file name, cluster size.
+- [x] Implement a minimal server with JSON RPC method for inspection...
 - [ ] Print L1/L2 table layout (even without reading them yet).
-- [ ] Add a `--inspect` option
-- [ ] Implement a minimal server with JSON RPC method for inspection...
 
 ### Create a qcow2 file from RAW block device
 
