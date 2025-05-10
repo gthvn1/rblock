@@ -1,4 +1,4 @@
-use log::error;
+use log::{debug, error};
 use std::fs::File;
 use std::io::{self, Read};
 use std::os::unix::fs::FileExt;
@@ -111,15 +111,46 @@ impl Qcow2 {
             }
         }
 
-        Ok(Self {
+        // Print some information before returning
+        let q = Qcow2 {
             file,
             version,
             header,
-        })
+        };
+
+        debug!("header length         : {}", q.header_len());
+        debug!("backing file          : {:?}", q.backing_file());
+        debug!("cluster size          : {}", q.cluster_size());
+        debug!("virtual size          : {}", q.virtual_size());
+        debug!("L1 size               : {}", q.l1_size());
+        debug!("L1 table offset       : 0x{:08x}", q.l1_table_offset());
+        debug!("refcount width        : {}", q.refcount_width());
+        debug!(
+            "refcount table offset : 0x{:08x}",
+            q.refcount_table_offset()
+        );
+
+        Ok(q)
     }
 
     pub fn version(&self) -> u32 {
         self.version
+    }
+
+    pub fn header_len(&self) -> usize {
+        self.header.len()
+    }
+
+    pub fn virtual_size(&self) -> u64 {
+        let (off_begin, off_end) = Qcow2Field::Size.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to convert virtual size: {}", e);
+                0
+            }
+        }
     }
 
     pub fn backing_file(&self) -> Option<String> {
@@ -198,5 +229,31 @@ impl Qcow2 {
                 0
             }
         }
+    }
+
+    pub fn refcount_table_offset(&self) -> u64 {
+        let (off_begin, off_end) = Qcow2Field::RefcountTableOffset.range();
+
+        match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u64::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to get refcount table offset: {}", e);
+                0
+            }
+        }
+    }
+
+    pub fn refcount_width(&self) -> u32 {
+        let (off_begin, off_end) = Qcow2Field::RefcountOrder.range();
+
+        let order = match self.header[off_begin..=off_end].try_into() {
+            Ok(bytes) => u32::from_be_bytes(bytes),
+            Err(e) => {
+                error!("failed to get refcount order: {}", e);
+                0
+            }
+        };
+
+        1 << order
     }
 }
