@@ -42,6 +42,65 @@ sudo hexdump -C -n 64 /dev/nbd0 --skip=$((3 * 65536))
 qemu-img map disk.qcow2
 ```
 
+## Notes
+
+### Mapping Guest Cluster
+
+- We are considering that cluster are 64K (default) as we don't support another size.
+- L1 table address are 8 bytes and cluster aligned. That means with one cluster we have 8129 addresses
+- L2 table address are also 8 bytes. So 8192 addresses
+- Let `guest_cluster` the number of the cluster where you read or write.
+  - For example if you want to read 10 bytes at offset 67000 it will be a read from guest cluster 1
+- **L1 Index** = `guest_cluster` / 8192
+- **L2 Index** = `guest_cluster` % 8192
+- For the refcount table:
+  - each refcount is 16 bits (default) = 2 bytes
+  - that means on one cluster we can hold 32768 refcounts
+  - **refcount_table_index** = `host_cluster` / 32768
+  - **refcount_block_index** = `host_cluster` % 32768
+
+```
+           Guest Cluster Address
+                   ↓
+       guest_cluster = floor(guest_addr / cluster_size)
+
+┌───────────────────────────────────────────┐
+│               L1 Table                    │
+├─────────────┬─────────────────────────────┤
+│ L1 Index 0  │ → Pointer to L2 Table #0    │ ← guest_cluster in 0..8191
+│ L1 Index 1  │ → Pointer to L2 Table #1    │ ← guest_cluster in 8192..16383
+│ ...         │                             │
+└─────────────┴─────────────────────────────┘
+                         ↓
+             L2 Index = guest_cluster % 8192
+                         ↓
+        ┌─────────────────────────────────┐
+        │         L2 Table (64KiB)        │
+        ├──────────────┬──────────────────┤
+        │ L2 Index N   │ → Host Cluster   │
+        └──────────────┴──────────────────┘
+                         ↓
+            Read/Write from Host Cluster
+
+┌──────────────────────────────┐
+│         Refcount Table       │
+├──────────────────────────────┤
+│ Entry for Refcount Block #X  │ → Refcount Block Offset
+└──────────────────────────────┘
+                         ↓
+        Refcount Block (64 KiB, 32768 entries of 2 bytes)
+        [host_cluster] ⇒ entry = refcount_table[X] + host_cluster % 32768 × 2
+
+```
+- Example:
+  - we want to read at 0x3000 (12288)
+  - `L1 Index = 12288 / 8192 = 1`
+  - `L2 Index = 12288 % 8192 = 4096`
+  - let's say that at L1 index 1 -> L2 index 4096 we have the address 0x50000 (327680)
+  - `refcount_table_index = 327680 / 32768 = 10`
+  - `refcount_table_offset = 327680 % 32768 = 0`
+  - so refcount value will be read at `refcount_table[10] + 2 * 0`
+  
 ## Steps
 
 ### Explore and play
