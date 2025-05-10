@@ -93,10 +93,10 @@ qemu-img map disk.qcow2
 
 ```
 - Example:
-  - we want to read at 0x3000 (12288)
+  - we want to read at guest 0x3000 (12288)
   - `L1 Index = 12288 / 8192 = 1`
   - `L2 Index = 12288 % 8192 = 4096`
-  - let's say that at L1 index 1 -> L2 index 4096 we have the address 0x50000 (327680)
+  - let's say that at L1 index 1 -> L2 index 4096 we have the host address 0x50000 (327680)
   - `refcount_table_index = 327680 / 32768 = 10`
   - `refcount_table_offset = 327680 % 32768 = 0`
   - so refcount value will be read at `refcount_table[10] + 2 * 0`
@@ -104,8 +104,6 @@ qemu-img map disk.qcow2
 ## Steps
 
 ### Explore and play
-
-- https://github.com/qemu/qemu/blob/master/docs/interop/qcow2.txt
 
 In progess...
 - [x] Detect QCOW2 magic.
