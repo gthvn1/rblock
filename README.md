@@ -42,6 +42,19 @@ sudo hexdump -C -n 64 /dev/nbd0 --skip=$((3 * 65536))
 qemu-img map disk.qcow2
 ```
 
+## Status
+
+- Currently we are running a NBD server that do the handshake (nothing more)
+  - Next enter into transmission mode...
+- We are also running a JSON-RPC server and you can do:
+```
+echo -n '{ \
+  "jsonrpc": "2.0", \
+  "method": "read_guest_cluster", \
+  "params": {"cluster": 2}, \
+  "id": 1 }' | nc localhost 1234 | jq
+```
+
 ## Notes
 
 ### Mapping Guest Cluster

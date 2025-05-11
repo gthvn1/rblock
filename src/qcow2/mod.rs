@@ -157,14 +157,8 @@ impl Qcow2 {
         }
 
         // And dump L1 entries
+        // TODO: Add RPC to do
         let _ = q.get_l1_entries();
-
-        // Get data from guest cluster 5
-        let data = q.read_guest_cluster(5);
-        debug!(
-            "Read from guest cluster 5: {}",
-            String::from_utf8_lossy(&data)
-        );
 
         Ok(q)
     }
@@ -423,6 +417,7 @@ impl Qcow2 {
             .read_at(&mut data, data_offset)
             .expect("Failed to read data for guest cluster");
 
+        debug!("Read {} bytes of data", n);
         data.truncate(n);
         data
     }

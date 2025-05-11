@@ -14,7 +14,8 @@ use crate::qcow2::Qcow2;
 pub fn start_ctrl_server(qcow: Arc<Mutex<Qcow2>>) {
     info!("Starting controller on localhost:1234");
     info!("  > ctrl-c to quit, ");
-    let help = r#"echo -n '{ "jsonrpc": "2.0", "method": "ping", "id": 1 }' | nc localhost 1234"#;
+    let help =
+        r#"echo -n '{ "jsonrpc": "2.0", "method": "discover", "id": 1 }' | nc localhost 1234"#;
     info!("  > {}", help);
 
     let listener =
@@ -40,6 +41,8 @@ struct JsonRpcRequest {
     jsonrpc: String,
     method: String,
     id: u64,
+    #[serde(default)]
+    params: serde_json::Value,
 }
 
 fn handle_connection(mut stream: TcpStream, qcow: Arc<Mutex<Qcow2>>) {
@@ -103,7 +106,7 @@ fn handle_connection(mut stream: TcpStream, qcow: Arc<Mutex<Qcow2>>) {
     let response = if let Some(handler) = rpc_methods.get(request.method.as_str()) {
         json!({
             "jsonrpc": "2.0",
-            "result": handler(&qcow),
+            "result": handler(&qcow, &request.params),
             "id":request.id,
         })
     } else {
