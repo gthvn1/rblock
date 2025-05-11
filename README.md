@@ -109,7 +109,10 @@ In progess...
 - [x] Detect QCOW2 magic.
 - [x] Parse version, backing file name, cluster size.
 - [x] Implement a minimal server with JSON RPC method for inspection...
-- [ ] Print L1/L2 table layout.
+- [x] access L1/L2 table.
+- [ ] return data from a given guest cluster
+  - [ ] using JSON-RPC API
+  - [ ] using NBD server
 
 ### Create a qcow2 file from RAW block device
 

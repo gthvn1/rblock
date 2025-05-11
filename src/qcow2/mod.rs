@@ -159,6 +159,13 @@ impl Qcow2 {
         // And dump L1 entries
         let _ = q.get_l1_entries();
 
+        // Get data from guest cluster 5
+        let data = q.read_guest_cluster(5);
+        debug!(
+            "Read from guest cluster 5: {}",
+            String::from_utf8_lossy(&data)
+        );
+
         Ok(q)
     }
 
@@ -356,5 +363,67 @@ impl Qcow2 {
         }
 
         entries
+    }
+
+    pub fn read_guest_cluster(&self, n: u64) -> Vec<u8> {
+        // Read the data corresponding to guest cluster N
+        let cluster_sz = self.cluster_size();
+        let mut data = vec![0u8; cluster_sz];
+
+        debug!("Reading data from guest cluster {}", n);
+        let l1_entries_per_cluster = cluster_sz / 8; // L1 entries are 8 bytes and the size of L1 is one cluster
+        // l1 entries per cluster is the same as L2 entries because L2 is a cluster size and addresses are 8 bytes.
+        let l1_index = n / l1_entries_per_cluster as u64;
+        let l2_index = n % l1_entries_per_cluster as u64;
+
+        debug!(
+            "Guest cluster {} is at L1[{}] and L2[{}]",
+            n, l1_index, l2_index
+        );
+
+        let mut bytes: [u8; 8] = [0u8; 8];
+        let l1_offset = self.l1_table_offset();
+
+        self.file
+            .read_exact_at(&mut bytes, l1_offset + l1_index * 8)
+            .unwrap_or_else(|_| {
+                panic!("Failed to read L1 entry at 0x{:016x}", l1_offset + l1_index)
+            });
+
+        let l1_entry = u64::from_be_bytes(bytes);
+        debug!("Read L1 entry 0x{:016x}", l1_entry);
+
+        if l1_entry == 0 {
+            // If entry is null it means there is no data so just returns.
+            return data;
+        }
+
+        let l2_offset = 0x7FFF_FFFF_FFFF_FFFF & l1_entry;
+        debug!("Read L1 entry and get L2 offset 0x{:016x}", l2_offset);
+
+        self.file
+            .read_exact_at(&mut bytes, l2_offset + l2_index * 8)
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to read L1 entry at 0x{:016x}",
+                    l2_offset + l2_index * 8
+                )
+            });
+
+        let l2_entry = u64::from_be_bytes(bytes);
+        debug!("Read L2 entry: 0x{:016x}", l2_entry);
+
+        if l2_entry == 0 {
+            return data;
+        }
+
+        let data_offset = 0x7FFF_FFFF_FFFF_FFFF & l2_entry;
+        let n = self
+            .file
+            .read_at(&mut data, data_offset)
+            .expect("Failed to read data for guest cluster");
+
+        data.truncate(n);
+        data
     }
 }
