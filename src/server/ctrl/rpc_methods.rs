@@ -10,7 +10,7 @@ type RpcHandler = fn(&Arc<Mutex<Qcow2>>, &serde_json::Value) -> serde_json::Valu
 static RPC_METHODS: OnceLock<HashMap<&'static str, RpcHandler>> = OnceLock::new();
 
 fn rpc_cluster_size(qcow: &Arc<Mutex<Qcow2>>, _params: &serde_json::Value) -> serde_json::Value {
-    let q = qcow.lock().unwrap();
+    let mut q = qcow.lock().unwrap();
     json!(q.cluster_size())
 }
 
@@ -18,7 +18,7 @@ fn rpc_get_backing_file(
     qcow: &Arc<Mutex<Qcow2>>,
     _params: &serde_json::Value,
 ) -> serde_json::Value {
-    let q = qcow.lock().unwrap();
+    let mut q = qcow.lock().unwrap();
     match q.backing_file() {
         None => json!("".to_string()),
         Some(s) => json!(s),
@@ -26,12 +26,12 @@ fn rpc_get_backing_file(
 }
 
 fn rpc_l1_size(qcow: &Arc<Mutex<Qcow2>>, _params: &serde_json::Value) -> serde_json::Value {
-    let q = qcow.lock().unwrap();
+    let mut q = qcow.lock().unwrap();
     json!(q.l1_size())
 }
 
 fn rpc_l1_table_offset(qcow: &Arc<Mutex<Qcow2>>, _params: &serde_json::Value) -> serde_json::Value {
-    let q = qcow.lock().unwrap();
+    let mut q = qcow.lock().unwrap();
     json!(q.l1_table_offset())
 }
 
@@ -60,7 +60,7 @@ fn rpc_read_guest_cluster(
         }
     };
 
-    let q = qcow.lock().unwrap();
+    let mut q = qcow.lock().unwrap();
     let data = q.read_guest_cluster(cluster_index);
     let encoded = general_purpose::STANDARD.encode(data);
     json!(encoded)
@@ -71,7 +71,7 @@ fn rpc_read_guest_cluster(
 struct RpcMethodInfo {
     name: &'static str,
     description: &'static str,
-    params : Vec<(&'static str, &'static str)>,
+    params: Vec<(&'static str, &'static str)>,
     return_type: &'static str, // Return type as a string for simplicity (e.g., "string", "integer", etc.)
 }
 
