@@ -34,7 +34,7 @@ sudo nbd-client localhost 10809 /dev/nbd0
 - to write on the third guest cluster a hello world string you can mount the disk using `qemu-img` and then `dd`:
 ```sh
 sudo qemu-nbd --connect=/dev/nbd0 disk.qcow2
-printf "Hello, world!" | sudo dd of=/dev/nbd0 bs=1 seek=$((3 * 65536)) conv=notrunc
+printf "Hello, World!" | sudo dd of=/dev/nbd0 bs=1 seek=$((3 * 65536)) conv=notrunc
 # disconnect and check
 sudo qemu-nbd --disconnect /dev/nbd0
 sudo hexdump -C -n 64 /dev/nbd0 --skip=$((3 * 65536))
@@ -48,11 +48,12 @@ qemu-img map disk.qcow2
   - Next enter into transmission mode...
 - We are also running a JSON-RPC server and you can do:
 ```
-echo -n '{ \
-  "jsonrpc": "2.0", \
-  "method": "read_guest_cluster", \
-  "params": {"cluster": 2}, \
-  "id": 1 }' | nc localhost 1234 | jq
+$ echo -n '{ "jsonrpc": "2.0", "method": "discover", id": 1 }' | nc localhost 1234
+```
+- To read data from a guest cluster you can:
+```
+$ echo -n '{ "jsonrpc": "2.0", "method": "read_guest_cluster", "params": {"cluster": 3}, "id": 1 }' | nc localhost 1234 | jq -r ".result" | base64 -d
+Hello, World!
 ```
 
 ## Notes
