@@ -62,17 +62,18 @@ impl Qcow2 {
         let mut q = Qcow2 { file, version };
 
         debug!("== Qcow2 header ==");
-        debug!("  header length         : {}", q.header_len());
-        debug!("  backing file          : {:?}", q.backing_file());
-        debug!("  cluster size          : {}", q.cluster_size());
-        debug!("  virtual size          : {}", q.virtual_size());
-        debug!("  L1 size               : {}", q.l1_size());
-        debug!("  L1 table offset       : 0x{:08x}", q.l1_table_offset());
-        debug!("  refcount width        : {}", q.refcount_width());
+        debug!("  header length          : {}", q.header_len());
+        debug!("  backing file           : {:?}", q.backing_file());
+        debug!("  cluster size           : {}", q.cluster_size());
+        debug!("  virtual size           : {}", q.virtual_size());
+        debug!("  L1 size                : {}", q.l1_size());
+        debug!("  L1 table offset        : 0x{:08x}", q.l1_table_offset());
+        debug!("  refcount width         : {}", q.refcount_width());
         debug!(
-            "  refcount table offset : 0x{:08x}",
+            "  refcount table offset  : 0x{:08x}",
             q.refcount_table_offset()
         );
+        debug!("  refcount table entries : {}", q.refcount_table_clusters());
 
         if version == 3 {
             debug!("  = Version 3 only");
@@ -93,25 +94,24 @@ impl Qcow2 {
         Ok(q)
     }
 
+    fn read_feature(&mut self, field: Qcow2Field, name: &str) -> u64 {
+        Qcow2Field::read_header(&field, &mut self.file).unwrap_or_else(|_| {
+            error!("failed to read {}", name);
+            0
+        })
+    }
+
     pub fn version(&self) -> u64 {
         self.version
     }
 
     pub fn backing_file(&mut self) -> Option<String> {
-        let offset = Qcow2Field::read_header(&Qcow2Field::BackingFileOffset, &mut self.file)
-            .unwrap_or_else(|_| {
-                error!("Failed to get backing file offset");
-                0
-            });
+        let offset = self.read_feature(Qcow2Field::BackingFileOffset, "backing file offset");
+        let sz = self.read_feature(Qcow2Field::BackingFileSize, "backing file size");
 
-        let sz = Qcow2Field::read_header(&Qcow2Field::BackingFileSize, &mut self.file)
-            .unwrap_or_else(|_| {
-                error!("Failed to get backing file name size");
-                0
-            });
-
-        debug!("Backing file offset   : {}", offset);
-        debug!("Backing file name size: {}", sz);
+        if sz == 0 {
+            return None;
+        }
 
         let mut buf = vec![0u8; sz as usize];
         let _bytes_read = match self.file.read_at(&mut buf, offset) {
@@ -134,117 +134,61 @@ impl Qcow2 {
     }
 
     pub fn cluster_size(&mut self) -> usize {
-        let cluster_bits = Qcow2Field::read_header(&Qcow2Field::ClusterBits, &mut self.file)
-            .unwrap_or_else(|_| {
-                error!("Failed to get cluster bits");
-                0
-            });
-
+        let cluster_bits = self.read_feature(Qcow2Field::ClusterBits, "cluster bits");
         (1 << cluster_bits) as usize
     }
 
     pub fn virtual_size(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::Size, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get the virtual size");
-            0
-        })
+        self.read_feature(Qcow2Field::Size, "size")
     }
 
     pub fn crypto_method(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::CryptMethod, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get crypto method");
-            0
-        })
+        self.read_feature(Qcow2Field::CryptMethod, "crypto method")
     }
 
     pub fn l1_size(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::L1Size, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get the virtual size");
-            0
-        })
+        self.read_feature(Qcow2Field::L1Size, "L1 size")
     }
 
     pub fn l1_table_offset(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::L1TableOffset, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get L1 table offset");
-            0
-        })
+        self.read_feature(Qcow2Field::L1TableOffset, "L1 table offset")
     }
 
     pub fn refcount_table_offset(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::RefcountTableOffset, &mut self.file).unwrap_or_else(
-            |_| {
-                error!("Failed to get refcount table offset");
-                0
-            },
-        )
+        self.read_feature(Qcow2Field::RefcountTableOffset, "refcount table offset")
     }
 
     pub fn refcount_table_clusters(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::RefcountTableClusters, &mut self.file).unwrap_or_else(
-            |_| {
-                error!("Failed to get refcount table offset");
-                0
-            },
-        )
+        self.read_feature(Qcow2Field::RefcountTableClusters, "refcount table clusters")
     }
 
     pub fn nb_snapshots(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::NbSnapshots, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get the number of snapshots");
-            0
-        })
+        self.read_feature(Qcow2Field::NbSnapshots, "number of snapshots")
     }
 
     pub fn snapshots_offset(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::SnapshotsOffset, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get the offset of snapshots");
-            0
-        })
+        self.read_feature(Qcow2Field::SnapshotsOffset, "snapshots offset")
     }
 
     pub fn incompatible_features(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::IncompatibleFeatures, &mut self.file).unwrap_or_else(
-            |_| {
-                error!("Failed to get incompatible featues");
-                0
-            },
-        )
+        self.read_feature(Qcow2Field::IncompatibleFeatures, "incompatible features")
     }
 
     pub fn compatible_features(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::CompatibleFeatures, &mut self.file).unwrap_or_else(
-            |_| {
-                error!("Failed to get compatible featues");
-                0
-            },
-        )
+        self.read_feature(Qcow2Field::CompatibleFeatures, "compatible features")
     }
 
     pub fn autoclear_features(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::AutoclearFeatures, &mut self.file).unwrap_or_else(
-            |_| {
-                error!("Failed to get autoclear featues");
-                0
-            },
-        )
+        self.read_feature(Qcow2Field::AutoclearFeatures, "autoclear features")
     }
 
     pub fn refcount_width(&mut self) -> u64 {
-        let order = Qcow2Field::read_header(&Qcow2Field::RefcountOrder, &mut self.file)
-            .unwrap_or_else(|_| {
-                error!("Failed to get refcount order");
-                0
-            });
-
+        let order = self.read_feature(Qcow2Field::RefcountOrder, "refcount order");
         1 << order
     }
 
     pub fn header_len(&mut self) -> u64 {
-        Qcow2Field::read_header(&Qcow2Field::HeaderLength, &mut self.file).unwrap_or_else(|_| {
-            error!("Failed to get the header length");
-            0
-        })
+        self.read_feature(Qcow2Field::HeaderLength, "header length")
     }
 
     pub fn get_l1_entries(&mut self) -> Vec<(usize, u64)> {
