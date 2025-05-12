@@ -125,7 +125,7 @@ In progess...
 - [x] Implement a minimal server with JSON RPC method for inspection...
 - [x] access L1/L2 table.
 - [ ] return data from a given guest cluster
-  - [ ] using JSON-RPC API
+  - [x] using JSON-RPC API
   - [ ] using NBD server
 
 ### Create a qcow2 file from RAW block device
