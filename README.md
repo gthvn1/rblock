@@ -58,6 +58,15 @@ Hello, World!
 
 ## Notes
 
+- L1 table entry points to one L2 table entry
+  - one L2 table has 8192 entries
+    - each entry points to a data cluster of 64k
+- So one L1 entry can address 8192 * 64k = 512M
+- When we create an empty qcow2 file we just need to reserve space
+  for L1 entries. So for a file below 512M we will need to reserve
+  space until 0x30008 that is 196616 (193K). If the file is 520M we
+  will have one more entry so the file will be 196624... and so on.
+
 ### Mapping Guest Cluster
 
 - We are considering that cluster are 64K (default) as we don't support another size.
